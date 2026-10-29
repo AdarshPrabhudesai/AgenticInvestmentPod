@@ -256,6 +256,9 @@ def read_10k_section(ticker: str, section: str, max_chars: int = 6000) -> str:
 def get_prices(ticker: str, period: str = "2y") -> pd.DataFrame:
     """Daily OHLCV + indicators (used for the chart and by the tools below)."""
     df = yf.Ticker(ticker).history(period=period, auto_adjust=False)
+    # Yahoo sometimes adds an unfinished row for today (or a dividend-only row) with
+    # empty prices; drop those so "last price" is always a real closing price.
+    df = df.dropna(subset=["Open", "High", "Low", "Close"])
     if df.empty:
         return df
     df.index = pd.to_datetime(df.index).tz_localize(None)

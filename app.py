@@ -256,11 +256,12 @@ ticker, company, sec, price, news, risk, prices = (R[k] for k in ("ticker", "com
 
 # ================================================================= header + verdict
 st.markdown(f"## {company} ({ticker})")
-if not prices.empty:
-    last, prev = prices["Close"].iloc[-1], prices["Close"].iloc[-2]
+closes = prices["Close"].dropna() if not prices.empty else pd.Series(dtype=float)
+if len(closes) >= 2:
+    last, prev = closes.iloc[-1], closes.iloc[-2]
     m = st.columns(3)
     m[0].metric("Last price", f"${last:,.2f}", f"{(last / prev - 1) * 100:+.2f}% today")
-    m[1].metric("3-month return", f"{(last / prices['Close'].iloc[-64] - 1) * 100:+.1f}%")
+    m[1].metric("3-month return", f"{(last / closes.iloc[-64] - 1) * 100:+.1f}%" if len(closes) > 64 else "—")
     if risk.ok:
         m[2].metric(f"Risk level ({risk.extra.get('risk_score', '?')}/100)", risk.extra.get("risk_level", "?"))
 st.caption("🤖 Models that made the decisions · " + " · ".join(
